@@ -1,0 +1,72 @@
+version: '3'
+services:
+  airflow-webserver:
+    image: apache/airflow:2.6.0
+    restart: always
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__WEBSERVER__RBAC=True
+      - AIRFLOW__WEBSERVER__SECRET_KEY=some_secret_key
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/airflow_files/dags
+      - PYTHONPATH=/opt/airflow/airflow_files:${PYTHONPATH}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow_files:/opt/airflow/airflow_files
+
+    depends_on:
+      - postgres
+    networks:
+      - airflow_network
+    entrypoint: >
+      bash -c "
+        airflow db upgrade &&
+        airflow webserver
+      "
+
+  airflow-scheduler:
+    image: apache/airflow:2.6.0
+    restart: always
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__WEBSERVER__SECRET_KEY=some_secret_key
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/airflow_files/dags
+      - PYTHONPATH=/opt/airflow/airflow_files:${PYTHONPATH}
+    volumes:
+      - ./airflow_files:/opt/airflow/airflow_files
+    depends_on:
+      - postgres
+    networks:
+      - airflow_network
+    entrypoint: >
+      bash -c "
+        airflow db upgrade &&
+        airflow scheduler
+      "
+
+  postgres:
+    image: postgres:13
+    restart: always
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/initial_scripts:/docker-entrypoint-initdb.d
+    networks:
+      - airflow_network
+
+volumes:
+  airflow_data:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  airflow_network:
+    driver: bridge
