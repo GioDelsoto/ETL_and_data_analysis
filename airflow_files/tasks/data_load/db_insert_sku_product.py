@@ -9,13 +9,13 @@ def db_insert_sku_products(sku_product_list: pd.DataFrame, db_url: str) -> None:
 
     Args:
         sku_product_list (pd.DataFrame): DataFrame containing SKU products.
-        db_url (str): SQLAlchemy database connection URL.
+        db_url (str): Database connection URL.
     """
 
     conn = psycopg2.connect(db_url)
     cursor = conn.cursor()
 
-    for index, row in sku_product_list.iterrows():
+    for _, row in sku_product_list.iterrows():
         query = sql.SQL("""
             INSERT INTO app_schema.products (sku, name)
             VALUES (%s, %s)

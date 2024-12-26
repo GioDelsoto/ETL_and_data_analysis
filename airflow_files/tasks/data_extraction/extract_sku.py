@@ -34,22 +34,33 @@ def extract_sku_from_sheets(sheet_id: str, store: str) -> Tuple[pd.DataFrame, pd
     df_sku_product = pd.read_csv(url_product)
 
     # Join and process data
-    df_sku = df_sku[['SKU dos Componentes', 'SKU']]
-    df_sku_product = df_sku_product[['SKU', 'Descrição']]
-    df_sku_product['SKU dos Componentes'] = '1 ' + df_sku_product['SKU']
+    df_sku = (df_sku[['SKU dos Componentes', 'SKU', 'Kits Pink Perfect Descrição']]
+              .rename(columns={'SKU dos Componentes': 'kit_composition', 'SKU': 'sku','Kits Pink Perfect Descrição':'name' }))
+
+    df_sku_product = df_sku_product.rename(columns = {'Descrição':'name', 'SKU':'sku'})
+
+
+    df_sku_product = df_sku_product[['sku', 'name']]
+    df_sku_product['kit_composition'] = '1 ' + df_sku_product['sku']
     df_sku_product.dropna(inplace=True)
-    df_sku = pd.concat([df_sku, df_sku_product[['SKU dos Componentes', 'SKU']]])
+    df_sku = pd.concat([ df_sku[['kit_composition', 'sku','name']], df_sku_product[['kit_composition', 'sku','name']] ])
 
     # Clean and rename columns
-    df_sku['SKU dos Componentes'] = df_sku['SKU dos Componentes'].str.strip()
-    df_sku = df_sku.rename(columns={'SKU dos Componentes': 'kit_composition', 'SKU': 'Kit_SKU'})
+    df_sku['kit_composition'] = df_sku['kit_composition'].str.strip()
 
     # Process SKUs into unique list
     sku_product = df_sku['kit_composition'].str.replace(" ", "").str.split(",")
     sku_product_list = [item for sublist in sku_product for item in sublist if len(item) > 2]
     sku_product_list = [sku[1:] if sku[0].isdigit() else sku for sku in sku_product_list]
-    sku_product_list = pd.DataFrame(list(set(sku_product_list)), columns=['SKU'])
-    sku_product_list = sku_product_list.merge(df_sku_product[['Descrição', 'SKU']], on='SKU', how='left')
-    sku_product_list = sku_product_list.rename(columns={'SKU':'sku','Descrição': 'name'})
+    sku_product_list = pd.DataFrame(list(set(sku_product_list)), columns=['sku'])
+    sku_product_list = sku_product_list.merge(df_sku_product[['name', 'sku']], on='sku', how='left')
+
+
+    df_sku.reset_index(drop=True, inplace=True)
+    sku_product_list.reset_index(drop=True, inplace=True)
+    sku_product_list['sku'] = sku_product_list['sku'].str.strip()
 
     return df_sku, sku_product_list
+
+
+#df_sku, b = extract_sku_from_sheets('19SYr2ZtowNH_C-t39AiA8gMVvGDPDA_ob0b1UI5KByc', 'pinkperfect')
