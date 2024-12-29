@@ -10,12 +10,18 @@ services:
       - AIRFLOW__WEBSERVER__SECRET_KEY=some_secret_key
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/airflow_files/dags
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+      - AIRFLOW__LOGGING__BASE_LOG_FOLDER=/opt/airflow/logs
+      - AIRFLOW__LOGGING__REMOTE_LOGGING=False
+      - AIRFLOW__LOGGING__LOGGING_LEVEL=DEBUG
       - PYTHONPATH=/opt/airflow/airflow_files:${PYTHONPATH}
     ports:
       - "8080:8080"
     volumes:
       - ./airflow_files:/opt/airflow/airflow_files
-
+      - ./airflow_files/logs:/opt/airflow/logs
+      - ./airflow_files/temp_data/customers_data:/opt/airflow/temp_data/customers_data
+      - ./airflow_files/temp_data/orders_data:/opt/airflow/temp_data/orders_data
     depends_on:
       - postgres
     networks:
@@ -35,9 +41,17 @@ services:
       - AIRFLOW__WEBSERVER__SECRET_KEY=some_secret_key
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/airflow_files/dags
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+      - AIRFLOW__LOGGING__BASE_LOG_FOLDER=/opt/airflow/logs
+      - AIRFLOW__LOGGING__REMOTE_LOGGING=False
+      - AIRFLOW__LOGGING__LOGGING_LEVEL=DEBUG
       - PYTHONPATH=/opt/airflow/airflow_files:${PYTHONPATH}
     volumes:
       - ./airflow_files:/opt/airflow/airflow_files
+      - ./airflow_files/logs:/opt/airflow/logs
+      - ./airflow_files/temp_data/customers_data:/opt/airflow/temp_data/customers_data
+      - ./airflow_files/temp_data/orders_data:/opt/airflow/temp_data/orders_data
+
     depends_on:
       - postgres
     networks:

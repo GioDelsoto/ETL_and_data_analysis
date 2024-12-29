@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Importando as funções utilizadas na DAG
-from tasks.data_extraction.extract_all_yampi_orders import fetch_orders
+from airflow_files.tasks.data_extraction.extract_yampi_orders import fetch_orders
 from tasks.data_load.db_insert_customer import db_insert_customer
 from tasks.data_transformation.prepare_orders_to_db import extract_order_info
 from tasks.data_load.db_insert_orders import db_insert_orders
@@ -31,8 +31,8 @@ headers = {
 }
 
 # Define as datas para processamento
-first_date = pd.to_datetime('2023-04-10', format="%Y-%m-%d")
-yesterday = datetime.now() - timedelta(365)
+first_date = pd.to_datetime('2023-11-01', format="%Y-%m-%d")
+yesterday = datetime.now() - timedelta(1)
 
 week_ranges = []
 current_start_date = first_date
@@ -72,3 +72,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    print("Processamento concluído.")
