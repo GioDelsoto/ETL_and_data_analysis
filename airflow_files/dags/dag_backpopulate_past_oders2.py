@@ -88,28 +88,12 @@ def insert_customers_data(**kwargs):
         db_insert_customer(df_customers, db_url)
 
 # Function to transform orders info
-def transform_orders_info(**kwargs):
+def transform_orders_info(path_orders_csv: str, **kwargs):
     """
     Transforms orders data.
     """
-    ti = kwargs['ti']
-
-    # Retrieve the list of file paths from all fetch_orders tasks in the TaskGroup
-    all_file_paths = []
-
-    # Iterate through all task instances in the group to gather their file paths
-    for task_instance in kwargs['dag_run'].get_task_instances():
-        file_paths = task_instance.xcom_pull(task_ids=task_instance.task_id, key='file_paths')
-        if file_paths:
-            all_file_paths.append(file_paths)
-
-    # Transform the orders data for each of the files
-    new_path_orders_csv = []
-    for _, path_orders_csv in all_file_paths:
-        new_path = extract_order_info(path_orders_csv, db_url)
-        new_path_orders_csv.append(new_path)
-
-    ti.xcom_push(key='new_file_paths', value=new_path_orders_csv)
+    new_path = extract_order_info(path_orders_csv, db_url)
+    return new_path
 
 # Function to insert orders data into the database
 def insert_orders_data(**kwargs):
@@ -117,7 +101,7 @@ def insert_orders_data(**kwargs):
     Inserts orders data into the database.
     """
     ti = kwargs['ti']
-    new_path_orders_csv = ti.xcom_pull(task_ids='transform_orders', key='new_file_paths')
+    new_path_orders_csv = ti.xcom_pull(task_ids='transform_orders_group', key='new_file_paths')
 
     # Iterate through all transformed file paths to insert orders data
 
@@ -158,12 +142,9 @@ def delete_temp_data(**kwargs):
     delete_files_in_folder(customers_data_path)
     delete_files_in_folder(orders_data_path)
 
-
-
-
 # Create DAG
 with DAG(
-    'backpopulate_orders',
+    'backpopulate_orders_V2',
     default_args={
         'owner': 'airflow',
         'retries': 4,
@@ -191,11 +172,17 @@ with DAG(
         provide_context=True,
     )
 
-    transform_orders_info_task = PythonOperator(
-        task_id='transform_orders',
-        python_callable=transform_orders_info,
-        provide_context=True,
-    )
+    # Create a TaskGroup to transform orders in parallel
+    with TaskGroup("transform_orders_group") as transform_orders_group:
+        ti = kwargs['ti']
+        all_file_paths = ti.xcom_pull(task_ids='fetch_orders_group', key='file_paths')
+        for _, path_orders_csv in all_file_paths:
+            transform_orders_task = PythonOperator(
+                task_id=f'transform_orders_{os.path.basename(path_orders_csv)}',
+                python_callable=transform_orders_info,
+                op_args=[path_orders_csv],
+                provide_context=True,
+            )
 
     insert_order_task = PythonOperator(
         task_id='insert_orders',
@@ -208,5 +195,6 @@ with DAG(
         python_callable=delete_temp_data,
         provide_context=True,
     )
+
     # Set the task dependencies
-    fetch_orders_group >> insert_customers_task >> transform_orders_info_task >> insert_order_task >> delete_temp_data_task
+    fetch_orders_group >> insert_customers_task >> transform_orders_group >> insert_order_task >> delete_temp_data_task

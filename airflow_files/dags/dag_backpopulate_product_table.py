@@ -8,6 +8,7 @@ from tasks.data_load.db_insert_sku_product import db_insert_sku_products
 from tasks.data_load.db_insert_sku_kits import db_insert_sku_kits
 from tasks.data_load.db_insert_kit_composition import db_insert_kit_composition
 from tasks.data_transformation.kits_composition_transformation import kits_composition_transformation
+from tasks.data_transformation.transform_skus import retrieve_products_sku
 
 import pandas as pd
 from datetime import timedelta
@@ -51,6 +52,15 @@ with DAG(
         ti.xcom_push(key='sku_product_list', value=sku_product_list.to_dict())
         ti.xcom_push(key='df_sku', value=df_sku.to_dict())
 
+    def retrieve_products_skus_callable(**kwargs):
+        ti = kwargs['ti']
+        df_sku_dict = ti.xcom_pull(key='df_sku', task_ids='extract_sku_data')
+        df_sku = pd.DataFrame(df_sku_dict)
+        sku_product_list_dict = ti.xcom_pull(key='sku_product_list', task_ids='extract_sku_data')
+        sku_product_list = pd.DataFrame(sku_product_list_dict)
+        sku_product_list_transformed = retrieve_products_sku(df_sku, sku_product_list)
+        ti.xcom_push(key='sku_product_list_transformed', value=sku_product_list_transformed.to_dict())
+
     def transform_kit_composition_task_callable(**kwargs):
         ti = kwargs['ti']
         df_sku_dict = ti.xcom_pull(key='df_sku', task_ids='extract_sku_data')
@@ -60,9 +70,9 @@ with DAG(
 
     def load_products_task_callable(**kwargs):
         ti = kwargs['ti']
-        sku_product_list_dict = ti.xcom_pull(key='sku_product_list', task_ids='extract_sku_data')
-        sku_product_list = pd.DataFrame(sku_product_list_dict)
-        db_insert_sku_products(sku_product_list, db_url)
+        sku_product_list_dict_transformed = ti.xcom_pull(key='sku_product_list_transformed', task_ids='retrieve_products_skus')
+        sku_product_list_transformed = pd.DataFrame(sku_product_list_dict_transformed)
+        db_insert_sku_products(sku_product_list_transformed, db_url)
 
     def load_kits_task_callable(**kwargs):
         ti = kwargs['ti']
@@ -80,6 +90,11 @@ with DAG(
     extract_data = PythonOperator(
         task_id='extract_sku_data',
         python_callable=extract_task_callable,
+    )
+
+    transform_sku_product = PythonOperator(
+        task_id='retrieve_products_skus',
+        python_callable=retrieve_products_skus_callable,
     )
 
     transform_kit_composition = PythonOperator(
@@ -103,6 +118,5 @@ with DAG(
     )
 
     # Set task dependencies
-
-    extract_data >> [load_products_data, load_kits_data]
+    extract_data >> transform_sku_product >> [load_products_data, load_kits_data]
     [load_products_data, load_kits_data] >> transform_kit_composition >> load_kit_composition

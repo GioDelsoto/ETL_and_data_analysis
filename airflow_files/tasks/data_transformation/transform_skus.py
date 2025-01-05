@@ -8,7 +8,7 @@ from airflow.utils.log.logging_mixin import LoggingMixin
 logger = LoggingMixin().log
 
 
-def kits_composition_transformation(df_sku: pd.DataFrame, db_url: str) -> pd.DataFrame:
+def retrieve_products_sku(df_sku: pd.DataFrame, sku_product_list: pd.DataFrame) -> pd.DataFrame:
     """
     Extracts the composition of kits from a DataFrame of SKU products.
 
@@ -19,7 +19,7 @@ def kits_composition_transformation(df_sku: pd.DataFrame, db_url: str) -> pd.Dat
         pd.DataFrame: DataFrame containing the composition of kits.
     """
 
-    kits_composition = []
+    products = []
 
     for _, row in df_sku.iterrows():
         kit_sku = row['sku']
@@ -38,46 +38,19 @@ def kits_composition_transformation(df_sku: pd.DataFrame, db_url: str) -> pd.Dat
                     continue
 
                 if element_split[0].isdigit(): #If the first element is a digit, it is the quantity
-                    quantity = int(element_split[0].strip())
                     product = element_split[1:].strip().replace(' ', '')
                 else:
-                    quantity = 1
                     product = element_split[0].strip().replace(' ', '')
 
             elif len(element_split) == 2:
-
-                quantity = int(element_split[0].strip())
                 product = element_split[1].strip().replace(' ', '')
             else:
                 logger.error(f'Invalid element in kit {kit_sku}: {element_split}')
                 continue
 
 
-            kits_composition.append({
-                'kit_sku': kit_sku,
-                'product_sku': product,
-                'quantity': quantity
-            })
+            products.append(product)
+    products_df = pd.DataFrame(products, columns = ['sku'])
+    sku_product_transformed = sku_product_list.merge(products_df.drop_duplicates(subset='sku'), on = 'sku', how = 'outer')
 
-    df_kits_composition = pd.DataFrame(kits_composition)
-
-    return df_kits_composition
-
-    # #Get the product_id for each product_sku from database
-    # conn = psycopg2.connect(db_url)
-    # cursor = conn.cursor()
-
-    # cursor.execute("SELECT sku, id FROM app_schema.products")
-    # product_skus = cursor.fetchall()
-    # product_id_map = {sku: id for sku, id in product_skus}
-
-    # cursor.execute("SELECT sku, id FROM app_schema.kits")
-    # kit_skus = cursor.fetchall()
-    # kit_id_map = {sku: id for sku, id in kit_skus}
-
-    # cursor.close()
-    # conn.close()
-
-    # #Map the product_id and kit_id to the product_sku and kit_sku
-    # df_kits_composition['kit_id'] = df_kits_composition['kit_sku'].map(kit_id_map).replace(np.nan, 1)
-    # df_kits_composition['product_id'] = df_kits_composition['product_sku'].map(product_id_map).replace(np.nan, 1)
+    return sku_product_transformed

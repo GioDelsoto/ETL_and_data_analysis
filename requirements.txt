@@ -1,7 +1,4 @@
-# Airflow
-apache-airflow==2.10.0
-
-# Bibliotecas necessárias
+# Backend library
 setuptools
 requests==2.31.0
 psycopg2-binary==2.9.7
@@ -9,7 +6,7 @@ pandas==2.2.3
 numpy>=2.0
 pendulum==3.0.0
 python-dotenv
-flask==3.1.0
+flask==3.0.3
 dash==2.18.2
 plotly==5.24.1
 sqlalchemy==2.0.36
