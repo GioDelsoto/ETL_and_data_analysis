@@ -88,7 +88,7 @@ def extract_order_info(path_orders_csv: str, db_url: str) -> pd.DataFrame:
 
         # Saving the resulting DataFrame to a new CSV file
         base, ext = os.path.splitext(path_orders_csv)
-        new_path_orders_csv = f"{base}_processed_TEST{ext}"
+        new_path_orders_csv = f"{base}_processed{ext}"
         df_extracted_orders.to_csv(new_path_orders_csv, index=False)
 
         # Returning the path to the processed CSV file

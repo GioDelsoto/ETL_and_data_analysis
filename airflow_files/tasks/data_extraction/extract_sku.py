@@ -32,10 +32,10 @@ def extract_sku_from_sheets(sheet_id: str, store: str) -> Tuple[pd.DataFrame, pd
     url_product = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name_product}'.replace(" ", "%20")
     df_sku = pd.read_csv(url_kit)
     df_sku_product = pd.read_csv(url_product)
-
+    print(df_sku.columns, df_sku_product.columns)
     # Join and process data
-    df_sku = (df_sku[['SKU dos Componentes', 'SKU', 'Kits Pink Perfect Descrição']]
-              .rename(columns={'SKU dos Componentes': 'kit_composition', 'SKU': 'sku','Kits Pink Perfect Descrição':'name' }))
+    df_sku = (df_sku[['SKU dos Componentes', 'SKU', 'Descrição']]
+              .rename(columns={'SKU dos Componentes': 'kit_composition', 'SKU': 'sku','Descrição':'name' }))
 
     df_sku_product = df_sku_product.rename(columns = {'Descrição':'name', 'SKU':'sku'})
 

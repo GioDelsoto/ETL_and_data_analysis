@@ -30,7 +30,7 @@ headers = {
 }
 
 # Define the first date of the data to be fetched
-first_date = pd.to_datetime('2021-02-01', format="%Y-%m-%d")
+first_date = pd.to_datetime('2023-01-01', format="%Y-%m-%d")
 yesterday = datetime.now() - timedelta(1)
 
 week_ranges = []

@@ -95,7 +95,7 @@ def fetch_orders(start_date, end_date, headers, yampi_alias):
 
     # Create a DataFrame for the orders
     df_orders = pd.DataFrame(all_orders)
-
+    df_orders['order_date'] = pd.to_datetime(df_orders['order_date'])
     # Saving the orders CSV file
     file_name_orders = f"orders_{start_date_str}_to_{end_date_str}.csv"
     file_path_orders = os.path.join(orders_folder, file_name_orders)
@@ -108,7 +108,9 @@ def fetch_orders(start_date, end_date, headers, yampi_alias):
         raise
 
     # Create the customers CSV file, excluding duplicates by CPF
-    df_customers = df_orders[['name', 'phone', 'email', 'cpf']].drop_duplicates('cpf', keep='first').copy()
+
+    df_customers = df_orders.sort_values('order_date').drop_duplicates('cpf', keep='first').copy()
+    df_customers = df_customers[['name', 'phone', 'email', 'cpf','order_date']]
     file_name_customers = f"customers_{start_date_str}_to_{end_date_str}.csv"
     file_path_customers = os.path.join(customers_folder, file_name_customers)
     try:

@@ -4,15 +4,16 @@ CREATE SCHEMA IF NOT EXISTS etl_schema;
 CREATE TABLE etl_schema."customers" (
   "id" SERIAL PRIMARY KEY,                      -- Identificador único do cliente
   "name" VARCHAR(100) NOT NULL,                 -- Nome do cliente
-  "email" VARCHAR(50) NOT NULL,          -- E-mail único
-  "cpf" VARCHAR(14) UNIQUE NOT NULL UNIQUE,               -- CPF com tamanho fixo e obrigatório
-  "phone" VARCHAR(20)                           -- Telefone opcional
+  "email" VARCHAR(50) NOT NULL,                 -- E-mail único
+  "cpf" VARCHAR(14) UNIQUE NOT NULL UNIQUE,     -- CPF com tamanho fixo e obrigatório
+  "phone" VARCHAR(20),                          -- Telefone
+  "created_at" TIMESTAMPTZ NOT NULL             -- Data do pedido em UTC
 );
 
 -- Tabela de produtos
 CREATE TABLE etl_schema."products" (
   "sku" VARCHAR(100) UNIQUE NOT NULL PRIMARY KEY, -- SKU único
-  "name" VARCHAR(100) NOT NULL                   -- Nome do produto
+  "name" VARCHAR(100) NOT NULL                    -- Nome do produto
 );
 
 -- Inserção de produto (para testes)
@@ -22,7 +23,7 @@ VALUES ('UNKNOWN', 'UNKNOWN');
 -- Tabela de kits
 CREATE TABLE etl_schema."kits" (
   "sku" VARCHAR(100) UNIQUE NOT NULL PRIMARY KEY, -- SKU do kit único
-  "name" VARCHAR(300) NOT NULL                   -- Nome do kit
+  "name" VARCHAR(300) NOT NULL                    -- Nome do kit
 );
 
 -- Tabela de conteúdo de kits
