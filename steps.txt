@@ -1,0 +1,47 @@
+source venv/bin/activate
+
+#Compose docker
+docker-compose up -d
+
+#Init airflow db
+docker exec -it <container-name-webserver> airflow db init
+
+#Create airflow user
+docker exec -it etl_and_data_analysis-airflow-webserver-1 bash
+
+airflow users create \
+    --username USERNAME \
+    --firstname FIRSTNAME \
+    --lastname LASTNAME \
+    --email EMAIL \
+    --role Admin \
+
+
+
+airflow users create \
+    --username admin \
+    --firstname Giovanni \
+    --lastname Delsoto \
+    --email gio.delsoto@gmail.com \
+    --role Admin
+
+
+#Instalar pacotes
+
+(Talvez em prod não tenha problema, pois o server estará conectado ao banco)
+sudo apt update
+sudo apt install postgresql postgresql-contrib libpq-dev
+sudo apt install build-essential libffi-dev libssl-dev python3-dev
+
+pip3 install -r requirements.txt
+
+
+
+-Open webserver localhost/8080
+
+run - backpopulate_product_table
+run capture_orders_dag
+
+
+10318282909
+01067587306
