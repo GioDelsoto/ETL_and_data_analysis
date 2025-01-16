@@ -50,6 +50,11 @@ def fetch_orders(start_date, end_date, headers, yampi_alias):
                 "total_product": order["value_products"],
                 "total_shipment": order["shipment_cost"],
                 "delivery_state": order['shipping_address']['data']['state'],
+                "delivery_city": order['shipping_address']['data']['city'],
+                "delivery_street": order['shipping_address']['data']['street'],
+                "delivery_number": order['shipping_address']['data']['number'],
+                "delivery_complement": order['shipping_address']['data']['complement'],
+                "delivery_zipcode": order['shipping_address']['data']['zipcode'],
                 "utm_source": order["utm_source"],
                 "utm_medium": order["utm_medium"],
                 "utm_campaign": order["utm_campaign"],
@@ -97,7 +102,7 @@ def fetch_orders(start_date, end_date, headers, yampi_alias):
     df_orders = pd.DataFrame(all_orders)
     df_orders['order_date'] = pd.to_datetime(df_orders['order_date'])
     # Saving the orders CSV file
-    file_name_orders = f"orders_{start_date_str}_to_{end_date_str}.csv"
+    file_name_orders = f"{yampi_alias}_orders_{start_date_str}_to_{end_date_str}.csv"
     file_path_orders = os.path.join(orders_folder, file_name_orders)
     print(file_path_orders)
     try:
@@ -111,7 +116,7 @@ def fetch_orders(start_date, end_date, headers, yampi_alias):
 
     df_customers = df_orders.sort_values('order_date').drop_duplicates('cpf', keep='first').copy()
     df_customers = df_customers[['name', 'phone', 'email', 'cpf','order_date']]
-    file_name_customers = f"customers_{start_date_str}_to_{end_date_str}.csv"
+    file_name_customers = f"{yampi_alias}_customers_{start_date_str}_to_{end_date_str}.csv"
     file_path_customers = os.path.join(customers_folder, file_name_customers)
     try:
         df_customers.to_csv(file_path_customers, index=False)

@@ -6,7 +6,7 @@ from tasks.data_load.db_insert_sku_kits import db_insert_sku_kits
 
 logger = LoggingMixin().log
 
-def db_insert_orders(df_orders: pd.DataFrame, db_url: str) -> None:
+def db_insert_orders(df_orders: pd.DataFrame, db_url: str, store_id: int) -> None:
     """
     Inserts a DataFrame of orders into the orders table in the database.
     """
@@ -26,21 +26,23 @@ def db_insert_orders(df_orders: pd.DataFrame, db_url: str) -> None:
                 # If SKU doesn't exist, insert it
                 if not sku_exists:
                     df_sku = pd.DataFrame({"sku": [row['kit_sku']], "name": [""]})
-                    db_insert_sku_kits(df_sku, db_url)
-
+                    db_insert_sku_kits(df_sku, db_url, store_id)
 
                 query = sql.SQL("""
                     INSERT INTO etl_schema.orders (
                         order_id, order_date, customer_id, status, payment_method, kit_sku, quantity,
                         total_value, total_product, total_shipment, coupom_code, coupom_value,
-                        delivery_state, utm_source, utm_medium, utm_campaign, transaction_installments, transaction_value
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        delivery_state, delivery_city, delivery_street, delivery_number, delivery_complement, delivery_zipcode,
+                        utm_source, utm_medium, utm_campaign, transaction_installments, transaction_value, store_id
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """)
                 cursor.execute(query, (
                     row['order_id'], row['order_date'], row['customer_id'], row['status'], row['payment_method'],
                     row['kit_sku'], row['quantity'], row['total_value'], row['total_product'], row['total_shipment'],
-                    row['coupom_code'], row['coupom_value'], row['delivery_state'], row['utm_source'], row['utm_medium'],
-                    row['utm_campaign'], row['transaction_installments'], row['transaction_value']
+                    row['coupom_code'], row['coupom_value'],
+                    row['delivery_state'], row['delivery_city'], row['delivery_street'],row['delivery_number'] ,row['delivery_complement'], row['delivery_zipcode'],
+                    row['utm_source'], row['utm_medium'],
+                    row['utm_campaign'], row['transaction_installments'], row['transaction_value'], store_id
                 ))
             except psycopg2.Error as e:
                 logger.error(f"Failed to insert order {row['order_id']} - Customer ID: {row['customer_id']}: {e}", extra={

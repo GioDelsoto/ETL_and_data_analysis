@@ -25,15 +25,14 @@ load_dotenv(dotenv_path=env_path)
 # Load environment variables
 sheet_id = os.getenv('SKU_GOOGLE_SHEET_ID')
 store = os.getenv('YAMPI_ALIAS')
-#db_url = f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_DATABASE')}"
 db_url = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_DATABASE')}"
 
 
 # Default arguments for the DAG
 default_args = {
     'owner': 'airflow',
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1),
+    'retries': 2,
+    'retry_delay': timedelta(seconds=15),
 }
 
 # Define the DAG

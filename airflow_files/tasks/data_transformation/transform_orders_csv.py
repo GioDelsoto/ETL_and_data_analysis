@@ -5,7 +5,7 @@ from airflow.utils.log.logging_mixin import LoggingMixin
 
 logger = LoggingMixin().log
 
-def extract_order_info(path_orders_csv: str, db_url: str) -> pd.DataFrame:
+def extract_order_info(path_orders_csv: str, db_url: str, store_id:int) -> pd.DataFrame:
     """
     Extract order and customer data based on CPF (Brazilian personal identifier).
 
@@ -32,6 +32,11 @@ def extract_order_info(path_orders_csv: str, db_url: str) -> pd.DataFrame:
             'coupom_code': 'str',
             'coupom_value': 'float64',
             'delivery_state': 'str',
+            'delivery_city': 'str',
+            'delivery_street': 'str',
+            'delivery_number': 'str',
+            'delivery_complement': 'str',
+            'delivery_zipcode': 'str',
             'utm_source': 'str',
             'utm_medium': 'str',
             'utm_campaign': 'str',
@@ -46,7 +51,9 @@ def extract_order_info(path_orders_csv: str, db_url: str) -> pd.DataFrame:
         df_extracted_orders = df_orders[[
             'order_id', 'order_date', 'cpf', 'status', 'payment_method',
             'kit_sku', 'quantity', 'total_value', 'total_product', 'total_shipment',
-            'coupom_code', 'coupom_value', 'delivery_state', 'utm_source', 'utm_medium',
+            'coupom_code', 'coupom_value',
+            'delivery_state','delivery_city', 'delivery_street','delivery_number','delivery_complement','delivery_zipcode',
+            'utm_source', 'utm_medium',
             'utm_campaign', 'transaction_installments', 'transaction_value'
         ]].copy()
 
@@ -56,9 +63,9 @@ def extract_order_info(path_orders_csv: str, db_url: str) -> pd.DataFrame:
             cursor = conn.cursor()
 
             # Executing query to fetch CPF and customer IDs
-            cursor.execute("SELECT cpf, id FROM etl_schema.customers")
+            cursor.execute("SELECT cpf, store_id, id FROM etl_schema.customers")
             customers = cursor.fetchall()
-            customers_ids_map = {cpf: id for cpf, id in customers}
+            customers_ids_map = {(cpf, store_id): id for cpf, store_id, id in customers}
 
         except psycopg2.Error as e:
             logger.error(f"Failed to SELECT customers from database: {e}", extra={
@@ -76,7 +83,7 @@ def extract_order_info(path_orders_csv: str, db_url: str) -> pd.DataFrame:
                 conn.close()
 
         # Mapping CPFs to customer IDs
-        df_extracted_orders['customer_id'] = df_extracted_orders['cpf'].map(customers_ids_map)
+        df_extracted_orders['customer_id'] = df_extracted_orders.apply(lambda row: customers_ids_map.get((row['cpf'], store_id)), axis=1)
         # Checking if there are any missing customer IDs (CPFs not found in database)
 
         if df_extracted_orders['customer_id'].isna().sum() > 0:
@@ -96,5 +103,5 @@ def extract_order_info(path_orders_csv: str, db_url: str) -> pd.DataFrame:
 
     except Exception as e:
         # Catching any other errors during the data processing
-        logger.critical(f"Failed to transform orders data: {e}", exc_info=True)
+        logger.critical(f"Failed to transform orders data file: {path_orders_csv}: {e}", exc_info=True)
         return None
