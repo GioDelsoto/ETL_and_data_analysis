@@ -6,16 +6,17 @@ CREATE TABLE etl_schema."stores" (
   "store_name" VARCHAR(100) NOT NULL,
   "yampi_alias" VARCHAR(100) NOT NULL,
   "created_at" DATE NOT NULL,
-  "fb_ad_account" VARCHAR(100) NOT NULL
+  "fb_ad_account" VARCHAR(100) NOT NULL,
+  "google_ads_account" VARCHAR(100) NOT NULL
 );
 
 -- Populating the stores table
-INSERT INTO etl_schema."stores" ("store_name", "yampi_alias", "created_at", "fb_ad_account")
+INSERT INTO etl_schema."stores" ("store_name", "yampi_alias", "created_at", "fb_ad_account", "google_ads_account")
 VALUES
-  ('BelaBelinda', 'belabelinda2', '2020-11-01', '255967664900512'),
-  ('PinkPerfect', 'pinkperfect', '2021-02-01', '2707580749468687'),
-  ('LeMoritz', 'lemoritz', '2023-01-01', '5585673474853626'),
-  ('BrainJuice', 'brain-juice', '2024-03-01', '915553960187187');
+  ('BelaBelinda', 'belabelinda2', '2020-11-01', '255967664900512','7934184746' ),
+  ('PinkPerfect', 'pinkperfect', '2021-02-01', '2707580749468687','4369514149'),
+  ('LeMoritz', 'lemoritz', '2023-01-01', '5585673474853626','3258684739'),
+  ('BrainJuice', 'brain-juice', '2024-03-01', '915553960187187','3412720264');
 
 CREATE TABLE etl_schema."customers" (
   "id" SERIAL PRIMARY KEY,                      -- Identificador único do cliente
@@ -93,10 +94,28 @@ CREATE TABLE etl_schema."facebook_ads_campaigns" (
 -- Tabela de resultados de campanhas de Facebook Ads
 CREATE TABLE etl_schema."facebook_ads_campaigns_results" (
   "spend" DECIMAL(10, 2) NOT NULL,
-  "results" DECIMAL(10, 2) NOT NULL,
+  "purchase" DECIMAL(10, 2) NOT NULL,
   "cpm" DECIMAL(10, 2) NOT NULL,
   "cpr" DECIMAL(10, 2) NOT NULL,
   "date" DATE NOT NULL,
   "campaign_id" VARCHAR(100) NOT NULL REFERENCES etl_schema."facebook_ads_campaigns" ("id"),
+  PRIMARY KEY ("campaign_id", "date") -- Chave primária composta
+);
+
+
+-- Tabela de campanhas de Facebook Ads
+CREATE TABLE etl_schema."google_ads_campaigns" (
+  "id" VARCHAR(100) PRIMARY KEY,
+  "name" VARCHAR(100) NOT NULL,
+  "channel" VARCHAR(100) NOT NULL,
+  "store_id" INTEGER NOT NULL REFERENCES etl_schema."stores" ("id")
+);
+
+-- Tabela de resultados de campanhas de Facebook Ads
+CREATE TABLE etl_schema."google_ads_campaigns_results" (
+  "spend" DECIMAL(10, 2) NOT NULL,
+  "conversions" DECIMAL(10, 2) NOT NULL,
+  "date" DATE NOT NULL,
+  "campaign_id" VARCHAR(100) NOT NULL REFERENCES etl_schema."google_ads_campaigns" ("id"),
   PRIMARY KEY ("campaign_id", "date") -- Chave primária composta
 );

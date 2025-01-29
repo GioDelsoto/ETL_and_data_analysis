@@ -90,7 +90,7 @@ def fetch_facebook_campaigns(store_id, token, ad_account, start_date, end_date):
         'spend': spend,
         'purchase': purchase,
         'cpm': cpm,
-        'cpp': cpp,
+        'cpr': cpp,
         'objective': objective,
         'date': dates
     })
@@ -110,7 +110,7 @@ def fetch_facebook_campaigns(store_id, token, ad_account, start_date, end_date):
 
     # File paths
     all_data_file_name = f"{store_id}_fb_data_{start_date_str}_to_{end_date_str}.csv"
-    unique_campaigns_file_name = f"{store_id}_unique_campaigns.csv"
+    unique_campaigns_file_name = f"{store_id}_unique_campaigns_{start_date_str}_to_{end_date_str}.csv"
 
     all_data_path = os.path.join(all_data_folder, all_data_file_name)
     unique_campaigns_path = os.path.join(unique_campaigns_folder, unique_campaigns_file_name)

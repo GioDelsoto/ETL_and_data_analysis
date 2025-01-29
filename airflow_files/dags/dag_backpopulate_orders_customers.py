@@ -22,7 +22,7 @@ db_url = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.ge
 def get_stores_from_db(db_url):
     conn = psycopg2.connect(db_url)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, store_name, yampi_alias, created_at FROM etl_schema.stores")  # Ajuste para sua tabela
+    cursor.execute("SELECT id, store_name, yampi_alias, created_at FROM etl_schema.stores")
     stores = cursor.fetchall()
     conn.close()
     return stores
@@ -58,7 +58,6 @@ def generate_store_week_ranges(stores):
 
     return store_week_ranges
 
-# Example usage
 stores = get_stores_from_db(db_url)
 store_week_ranges = generate_store_week_ranges(stores)
 
@@ -191,7 +190,7 @@ with DAG(
         'retry_delay': timedelta(seconds=15),
     },
     schedule_interval=None,
-    start_date=datetime.today(),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
 ) as dag:
 
